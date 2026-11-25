@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useId, useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 import {
@@ -9,6 +9,7 @@ import {
   THEME_STORAGE_KEY,
   type ThemePreference,
 } from "@/lib/theme";
+import { useThemePreference } from "@/components/ThemeProvider";
 
 function subscribe(onChange: () => void) {
   const onStorage = (event: StorageEvent) => {
@@ -30,47 +31,38 @@ function getSnapshot(): ThemePreference {
   return parseTheme(document.documentElement.getAttribute("data-theme"));
 }
 
-function getServerSnapshot(): ThemePreference {
-  return "system";
-}
-
-function setTheme(theme: ThemePreference) {
-  document.documentElement.dataset.theme = theme;
-  try {
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
-  } catch {
-    // Keep the selection for this page even when browser storage is unavailable.
-  }
-  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
-}
-
 const choices = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "System", icon: Monitor },
 ] as const;
 
-export function ThemeToggle() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+export function ThemeToggle({ label = "Appearance", showStatus = true }: { label?: string; showStatus?: boolean }) {
+  const preference = useThemePreference();
+  const theme = useSyncExternalStore(subscribe, getSnapshot, () => preference.serverTheme ?? "system");
+  const name = useId();
 
   return (
     <fieldset className="theme-toggle">
-      <legend>Appearance</legend>
+      <legend>{label}</legend>
       <div className="theme-options">
         {choices.map(({ value, label, icon: Icon }) => (
           <label className="theme-choice" key={value}>
             <input
               type="radio"
-              name="theme"
+              name={name}
               value={value}
               checked={theme === value}
-              onChange={() => setTheme(value)}
+              onChange={() => preference.select(value)}
             />
             <Icon size={18} aria-hidden="true" />
             <span>{label}</span>
           </label>
         ))}
       </div>
+      {preference.signedIn && showStatus && <p className="theme-save-status" role={preference.status === "error" ? "alert" : "status"}>
+        {preference.status === "saving" ? "Saving appearance…" : preference.status === "saved" ? "Appearance saved." : preference.status === "error" ? "Couldn’t save appearance. Your saved choice was restored. Try again." : "Appearance syncs with your account."}
+      </p>}
     </fieldset>
   );
 }

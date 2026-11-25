@@ -2,7 +2,9 @@
 
 Import application helpers from `@/server/auth` in server code. `/auth` provides
 sign-in and registration; `/app/onboarding` provides initial participant choices;
-`/app` is a minimal protected landing page. Mutations use Server Actions.
+`/app` is the shared role-aware dashboard and `/app/account` provides account
+settings. Auth mutations use Server Actions; workspace preferences use a protected
+JSON endpoint. See [workspace documentation](../workspace/README.md).
 
 - `authenticatePassword(email, password)` returns a basic user or `null`, including
   the same failure result for wrong credentials, unknown accounts, and suspension.
@@ -109,8 +111,9 @@ nonprofit eligibility or bypass GitHub/readiness gates.
 
 `AuthRateLimit` provides shared, atomic ten-minute windows across app workers:
 200 sign-in attempts globally, 10 per normalized account, 100 registrations
-globally, 3 per registration email, and 10 onboarding attempts per authenticated
-user. Keys are HMAC digests; no raw emails or IPs are persisted. Expired windows
+globally, 3 per registration email, 10 onboarding attempts per authenticated
+user, and 120 workspace preference writes per authenticated user. Keys are HMAC
+digests; no raw emails or IPs are persisted. Expired windows
 reset on their next use. Database failures stop the mutation.
 
 Forms support password managers/paste, linked field errors and a focused error
@@ -123,5 +126,5 @@ signing secret, leaving other development instances' session/throttle namespace
 alone. It uses synthetic test identities and removes only its own fixture rows.
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` can select an existing Chromium executable.
 Database tests include concurrent registration/onboarding and transactional
-rollback. Full workspace UI, account settings, OAuth, and recovery workflows are
-future increments.
+rollback. Discovery, catalog, GitHub/OAuth, and recovery workflows remain future
+increments.

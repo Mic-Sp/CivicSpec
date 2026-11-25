@@ -114,6 +114,7 @@ button:disabled { cursor: wait; }
   font-size: var(--text-meta-size);
 }
 .theme-options { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.theme-save-status, .role-save-status { max-width: 32ch; min-height: 1.5rem; margin-top: var(--space-2); color: var(--color-text-secondary); font-size: var(--text-meta-size); }
 .theme-choice {
   display: inline-flex;
   align-items: center;
@@ -207,4 +208,67 @@ h1 {
 
 @media (forced-colors: active) {
   .theme-choice:has(input:checked) { border-width: var(--focus-outline-width); }
+}
+
+.workspace-shell { max-width: 100rem; margin-inline: auto; padding: var(--space-6); }
+.workspace-header { display: flex; align-items: flex-start; flex-wrap: wrap; gap: var(--space-6); padding-bottom: var(--space-6); margin-bottom: var(--space-8); border-bottom: 1px solid var(--color-border-decorative); }
+.workspace-header .wordmark { margin-right: auto; }
+.workspace-role-control { display: grid; gap: var(--space-2); min-width: 0; max-width: 18rem; }
+.workspace-role-control label { font-weight: 600; }
+.workspace-role-control select { width: 100%; max-width: 100%; min-height: var(--control-min-height); border: 1px solid var(--color-border-control); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); background: var(--color-surface); color: var(--color-text-primary); font: inherit; }
+.workspace-role-control select:disabled { opacity: 1; }
+.workspace-role-control .role-save-status { margin: 0; }
+.workspace-utilities { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.workspace-grid { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.workspace-sidebar { min-width: 0; padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border-decorative); border-radius: var(--radius-panel); }
+.workspace-nav-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.workspace-nav-list > li > a, .workspace-nav-list > li > span { display: flex; align-items: center; gap: var(--space-3); min-height: var(--control-min-height); padding: var(--space-2); border-radius: var(--radius-control); color: var(--color-text-primary); }
+.workspace-nav-list > li > a { border: 1px solid var(--color-border-control); text-decoration: none; }
+.workspace-nav-list a[aria-current="page"] { background: var(--color-accent-surface); color: var(--color-accent-text); font-weight: 600; }
+.workspace-nav-list a:hover { background: var(--color-surface-subtle); }
+.workspace-nav-list svg { flex-shrink: 0; }
+.workspace-nav-list small { display: block; color: var(--color-text-secondary); font-size: var(--text-meta-size); }
+.planned-navigation > li > span { color: var(--color-text-secondary); }
+.nav-role-heading { margin: var(--space-8) 0 var(--space-3); font-size: var(--text-meta-size); font-weight: 600; color: var(--color-text-secondary); }
+.workspace-main-column { min-width: 0; }
+.workspace-main-column main { padding: 0; }
+.workspace-mobile-menu { display: none; }
+.workspace-footer { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-12); color: var(--color-text-secondary); font-size: var(--text-meta-size); overflow-wrap: anywhere; }
+.workspace-footer svg { flex-shrink: 0; }
+.workspace-shell h1 { max-width: 100%; overflow-wrap: anywhere; }
+.workspace-shell h2 { font-size: var(--text-h2-size); line-height: var(--text-h2-line); font-weight: 600; }
+.workspace-shell h3 { font-size: var(--text-h3-size); line-height: var(--text-h3-line); font-weight: 600; }
+.workspace-introduction { max-width: var(--measure-max); margin: 0 0 var(--space-4); color: var(--color-text-secondary); }
+.authorized-access { margin: 0 0 var(--space-8); color: var(--color-text-secondary); }
+.workspace-panel { min-width: 0; padding: var(--space-6); border: 1px solid var(--color-border-decorative); border-radius: var(--radius-panel); background: var(--color-surface); }
+.workspace-panel p { max-width: var(--measure-max); margin-block: var(--space-4); }
+.panel-title { display: flex; align-items: center; gap: var(--space-3); }
+.panel-title svg { flex-shrink: 0; color: var(--color-accent-text); }
+.next-action { margin-bottom: var(--space-8); }
+.dashboard-status > h2 { margin-bottom: var(--space-4); }
+.dashboard-status > .status-badge { margin-bottom: var(--space-6); }
+.status-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--space-4); }
+.planned-badge { display: flex; align-items: center; gap: var(--space-2); color: var(--color-text-secondary); font-size: var(--text-meta-size); }
+.planned-badge svg { flex-shrink: 0; }
+.account-settings { max-width: 56rem; }
+.account-settings > .workspace-panel + .workspace-panel { margin-top: var(--space-6); }
+.account-details { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
+.account-details > div { display: grid; grid-template-columns: minmax(6rem, 1fr) minmax(0, 3fr); gap: var(--space-4); }
+.account-details dt { color: var(--color-text-secondary); }
+.account-details dd { overflow-wrap: anywhere; }
+
+@media (max-width: 74.99rem) {
+  .workspace-grid { grid-template-columns: minmax(0, 1fr); }
+  .workspace-sidebar { display: none; }
+  .workspace-mobile-menu { display: block; margin-bottom: var(--space-6); padding: var(--space-3); border: 1px solid var(--color-border-control); border-radius: var(--radius-control); background: var(--color-surface); }
+  .workspace-mobile-menu summary { min-height: var(--control-min-height); display: flex; align-items: center; gap: var(--space-2); cursor: pointer; font-weight: 600; }
+  .workspace-mobile-menu[open] summary { margin-bottom: var(--space-4); }
+}
+@media (max-width: 47.99rem) {
+  .workspace-shell { padding: var(--space-4); }
+  .workspace-header { gap: var(--space-4); }
+  .workspace-header .wordmark { flex-basis: 100%; }
+  .workspace-role-control { width: 100%; max-width: none; }
+  .workspace-panel { padding: var(--space-4); }
+  .account-details > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
 }

@@ -195,6 +195,7 @@ model UserRole {
 model UserPreference {
   userId    String          @id
   theme     ThemePreference @default(SYSTEM) // NFR-051
+  activeRole RoleType?       // Workspace preference only; never an authorization grant.
   updatedAt DateTime        @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
