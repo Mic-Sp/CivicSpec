@@ -119,7 +119,8 @@ test("single-role seeded accounts show only their role and shared views omit con
     expect(content).not.toMatch(/MISSION_PRIORITY|PARTNER_PRIORITY|priority eligibility|partner referral|justice.impacted|Example Community Food Pantry|Synthetic Workforce Partner/i);
     const id = seedIds.get(local)!;
     expect((await postPreference(page, { expectedUserId: id, activeRole: "ADMIN" })).status).toBe(403);
-    for (const href of await page.locator('.workspace-shell a[href^="/app"]').evaluateAll(links => links.map(link => link.getAttribute("href")))) expect(["/app", "/app/account"]).toContain(href);
+    const available = local === "owner" ? ["/app", "/app/account", "/app/owner/eligibility", "/app/submissions", "/app/submissions/new"] : ["/app", "/app/account"];
+    for (const href of await page.locator('.workspace-shell a[href^="/app"]').evaluateAll(links => links.map(link => link.getAttribute("href")))) expect(available).toContain(href);
     await signOut(page);
   }
 });

@@ -17,14 +17,14 @@ export function Dashboard() {
       <section className="workspace-panel next-action" aria-labelledby="next-action-heading">
         <div className="panel-title"><ListChecks size={24} aria-hidden="true" /><h2 id="next-action-heading">Your next step</h2></div>
         <p>{content.next}</p>
-        <Link className="primary-button" href="/app/account">Review account settings</Link>
+        <Link className="primary-button" href={activeRole === "PROBLEM_OWNER" ? "/app/owner/eligibility" : "/app/account"}>{activeRole === "PROBLEM_OWNER" ? "Review owner eligibility" : "Review account settings"}</Link>
       </section>
       <section className="dashboard-status" aria-labelledby="status-heading">
         <h2 id="status-heading">Workspace status</h2>
         <p className="status-badge"><CheckCircle2 size={20} aria-hidden="true" /><span>Account active</span></p>
         <div className="status-card-grid">
           {content.sections.map(section => <article key={section.name} className="workspace-panel status-card">
-            <h3>{section.name}</h3><p className="planned-badge"><Clock3 size={18} aria-hidden="true" /><span>Coming soon</span></p><p>{section.description}</p>
+            <h3>{section.name}</h3>{section.href ? <p className="planned-badge"><CheckCircle2 size={18} aria-hidden="true" /><span>Available</span></p> : <p className="planned-badge"><Clock3 size={18} aria-hidden="true" /><span>Coming soon</span></p>}<p>{section.description}</p>{section.href && <Link className="secondary-button" href={section.href}>Open {section.name.toLowerCase()}</Link>}
           </article>)}
         </div>
       </section>

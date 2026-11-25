@@ -29,7 +29,7 @@ function WorkspaceNavigation({ role }: { role: RoleType }) {
       </ul>
       <h2 className="nav-role-heading">For {roleNames[role].toLowerCase()}s</h2>
       <ul className="workspace-nav-list planned-navigation">
-        {workspaceContent[role].sections.map(section => <li key={section.name}><span><Clock3 size={18} aria-hidden="true" /><span>{section.name}<small>Coming soon</small></span></span></li>)}
+        {workspaceContent[role].sections.map(section => <li key={section.name}>{section.href ? <Link href={section.href} aria-current={path === section.href ? "page" : undefined}><CheckCircle2 size={18} aria-hidden="true" />{section.name}</Link> : <span><Clock3 size={18} aria-hidden="true" /><span>{section.name}<small>Coming soon</small></span></span>}</li>)}
       </ul>
     </nav>
   );

@@ -8,11 +8,11 @@ export function selectWorkspaceRole(authorized: readonly RoleType[], requested: 
 }
 
 // Presentation-only descriptions. No private data, permissions, or live counts.
-export const workspaceContent: Record<RoleType, { title: string; introduction: string; next: string; sections: readonly { name: string; description: string }[] }> = {
+export const workspaceContent: Record<RoleType, { title: string; introduction: string; next: string; sections: readonly { name: string; description: string; href?: string }[] }> = {
   PROBLEM_OWNER: {
     title: "Problem owner dashboard", introduction: "A place to turn community needs into bounded, human-reviewed projects.",
-    next: "Review your account details. You’ll be able to describe a noncommercial technical need when guided intake opens.",
-    sections: [{ name: "My submissions", description: "Save and develop your community’s technical needs." }, { name: "New request", description: "Start guided discovery for a noncommercial need." }, { name: "My projects", description: "Follow reviewed projects and provide stakeholder feedback." }],
+    next: "Check your noncommercial eligibility, then acknowledge the recording notice to save a private request. Interactive discovery is coming next.",
+    sections: [{ name: "Owner eligibility", description: "Submit or review your noncommercial-purpose attestation.", href: "/app/owner/eligibility" }, { name: "My submissions", description: "Resume drafts and inspect requests and child micro-projects.", href: "/app/submissions" }, { name: "New request", description: "Review the privacy notice and choose a starting discovery mode.", href: "/app/submissions/new" }, { name: "My projects", description: "Follow reviewed projects and provide stakeholder feedback." }],
   },
   DEVELOPER: {
     title: "Builder dashboard", introduction: "A place to contribute your skills and build meaningful experience.",
