@@ -2,6 +2,9 @@
   "name": "civicspec",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "engines": {
     "node": ">=22.0.0"
   },
@@ -32,6 +35,7 @@
     "eslint-config-next": "16.4.6",
     "prisma": "6.19.3",
     "tailwindcss": "4.3.5",
+    "tsx": "4.23.15",
     "typescript": "5.9.3"
   }
 }
