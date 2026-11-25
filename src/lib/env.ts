@@ -25,7 +25,8 @@ const serverEnvSchema = z.object({
     (value) => ["http:", "https:"].includes(new URL(value).protocol),
     "Must be an HTTP(S) URL",
   ).default("http://localhost:3000"),
-  // Auth is inactive. No shared default signing secret is provided.
+  // Optional for public scaffold builds; required when authentication is used.
+  // No shared default signing secret is provided.
   AUTH_SECRET: z.preprocess(
     (value) => (value === "" ? undefined : value),
     z.string().min(32).optional(),

@@ -15,6 +15,8 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
+    "test": "node --conditions=react-server --import tsx --test tests/auth/*.test.ts",
+    "test:auth:db": "node --conditions=react-server --import tsx --test tests/integration/auth.test.ts",
     "postinstall": "prisma generate && next typegen"
   },
   "dependencies": {

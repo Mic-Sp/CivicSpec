@@ -13,6 +13,8 @@ import {
   VerificationStatus,
 } from "@prisma/client";
 
+import { hashPassword, verifyPassword } from "../src/server/auth/password";
+
 // DEVELOPMENT/TEST FIXTURES ONLY. All identities and approval evidence are synthetic.
 // No GitHub repository, account verification, CI run, or AI output is real.
 // The CLI loads .env. Do not import the Next.js server-only singleton into this CLI.
@@ -41,15 +43,26 @@ async function seed() {
 
     const users = new Map<string, string>();
     for (const person of people) {
+      // Only the six namespaced synthetic accounts receive the development password.
+      // Reuse working hashes so reruns do not change salts, hashes, or timestamps.
+      const existing = await tx.user.findUnique({
+        where: { email: person.email },
+        select: { id: true, passwordHash: true },
+      });
+      if (existing && existing.id !== id(person.key)) {
+        throw new Error("Synthetic email belongs to another account; seed aborted.");
+      }
+      const passwordHash = existing && await verifyPassword("CivicSpecPilot123!", existing.passwordHash)
+        ? existing.passwordHash!
+        : await hashPassword("CivicSpecPilot123!");
       const user = await tx.user.upsert({
         where: { email: person.email },
-        update: {},
+        update: existing?.passwordHash === passwordHash ? {} : { passwordHash, updatedAt: at(0) },
         create: {
           id: id(person.key),
           email: person.email,
           displayName: person.name,
-          // No seeded credentials, shared passwords, or login mechanisms.
-          passwordHash: null,
+          passwordHash,
           createdAt: at(0),
           updatedAt: at(0),
         },
