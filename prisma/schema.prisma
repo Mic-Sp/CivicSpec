@@ -1,0 +1,719 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum RoleType {
+  PROBLEM_OWNER
+  DEVELOPER
+  REVIEWER
+  ADMIN
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum OwnerCategory {
+  NONPROFIT_501C3
+  COMMUNITY_GROUP
+  INDIVIDUAL_NONCOMMERCIAL
+  COMMERCIAL_DEFERRED // Blocked from Release 2 implementation (FR-130)
+}
+
+enum VerificationStatus {
+  PENDING
+  NEEDS_INFO
+  VERIFIED
+  REJECTED
+  DEFERRED
+}
+
+enum IntakeMode {
+  CHAT
+  WIZARD
+}
+
+enum DiscoveryAuthorRole {
+  STAKEHOLDER
+  ASSISTANT
+  REVIEWER
+  SYSTEM
+}
+
+enum ClaimStatus {
+  CONFIRMED
+  INFERRED
+  PROPOSED
+  DISPUTED
+  UNRESOLVED
+}
+
+enum SubmissionState {
+  DRAFT
+  SUBMITTED
+  TRIAGE_IN_PROGRESS
+  CLARIFICATION_REQUIRED
+  SPECIFICATION_DRAFTED
+  SPECIFICATION_REVIEW
+  STAKEHOLDER_CONFIRMATION
+  APPROVED
+  REJECTED
+  CANCELLED
+  ARCHIVED
+}
+
+enum ProjectState {
+  DRAFT
+  SPECIFICATION_REVIEW
+  STAKEHOLDER_CONFIRMATION
+  APPROVED
+  PUBLISHED
+  ASSIGNED
+  IN_PROGRESS
+  TECHNICAL_REVIEW
+  CHANGES_REQUESTED
+  STAKEHOLDER_ACCEPTANCE
+  COMPLETED
+  REJECTED
+  CANCELLED
+  ARCHIVED
+}
+
+enum ComplexityTier {
+  FOUNDATIONAL
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum RoutingTier {
+  MISSION_PRIORITY   // Tier 1: Confidential justice-impacted priority (FR-040)
+  PARTNER_PRIORITY   // Tier 2: Verified partner cohort graduates (FR-040)
+  GENERAL_ACCESS     // Tier 3: All calibrated builders (FR-040)
+}
+
+enum GovernanceMode {
+  FREE_FORK_CI         // Release 2 Free Org: private fork PRs + Gitleaks CI
+  PAID_NATIVE_RULESETS // Upgrade path: native rulesets + secret protection
+}
+
+enum RepoAccessStatus {
+  NOT_GRANTED
+  PENDING_GRANT
+  ACTIVE_VERIFIED
+  PENDING_REVOKE
+  REVOKED
+  FAILED_RECONCILIATION
+}
+
+enum MilestoneType {
+  SANDBOX_CALIBRATION
+  TECHNICAL_REVIEW_PASSED
+  STAKEHOLDER_ACCEPTED
+  PRODUCTION_DEPLOYED
+  OPERATIONAL_ADOPTION
+}
+
+// ============================================================================
+// 1. IDENTITY, PREFERENCES & CONFIDENTIAL ELIGIBILITY
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  displayName   String
+  passwordHash  String?
+  isSuspended   Boolean   @default(false)
+  suspendReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  roles                  UserRole[]
+  preference             UserPreference?
+  developerProfile       DeveloperProfile?
+  priorityEligibility    PriorityEligibility?
+  partnerReferrals       PartnerReferral[]       @relation("ReferredBuilder")
+  verifiedReferrals      PartnerReferral[]       @relation("VerifiedByAdmin")
+  sandboxCalibrations    SandboxCalibration[]
+  organizations          OrganizationMember[]
+  submissions            ProblemSubmission[]
+  assignments            ProjectAssignment[]
+  reviews                Review[]
+  acceptances            AcceptanceRecord[]
+  contributions          ContributionRecord[]
+  supporterLinks         SupporterLink[]
+  auditEvents            AuditEvent[]            @relation("AuditActor")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  role      RoleType
+  grantedBy String?
+  grantedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+}
+
+model UserPreference {
+  userId    String          @id
+  theme     ThemePreference @default(SYSTEM) // NFR-051
+  updatedAt DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeveloperProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  bio              String?
+  skills           String[]
+  interests        String[]
+  isPublicProfile  Boolean  @default(false)
+  githubUserId     String?  @unique
+  githubUsername   String?
+  githubVerifiedAt DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Isolated confidential attribute; never joined in public/shared projections (FR-006, FR-042)
+model PriorityEligibility {
+  id              String             @id @default(cuid())
+  userId          String             @unique
+  status          VerificationStatus @default(PENDING)
+  attestationNote String?
+  verifiedById    String?
+  verifiedAt      DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Separate from PriorityEligibility; grants sandbox bypass + Tier 2 queue access (FR-008, FR-139)
+model PartnerReferral {
+  id              String             @id @default(cuid())
+  userId          String
+  partnerOrgName  String             // e.g., "Next Chapter", "The Last Mile"
+  cohortLabel     String?
+  status          VerificationStatus @default(PENDING)
+  consentRecorded Boolean            @default(false)
+  verifiedById    String?
+  verifiedAt      DateTime?
+  createdAt       DateTime           @default(now())
+
+  user       User  @relation("ReferredBuilder", fields: [userId], references: [id], onDelete: Cascade)
+  verifiedBy User? @relation("VerifiedByAdmin", fields: [verifiedById], references: [id])
+}
+
+// Synthetic PR readiness gate for independent builders (FR-139, FR-140)
+model SandboxCalibration {
+  id             String   @id @default(cuid())
+  userId         String
+  githubUsername String
+  prNumber       Int?
+  headSha        String?
+  branchName     String?
+  testsPassed    Boolean  @default(false)
+  secretsClean   Boolean  @default(false)
+  workflowValid  Boolean  @default(false) // Verifies baseline tests were not tampered with
+  passed         Boolean  @default(false)
+  failureReason  String?
+  evaluatedAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, passed])
+}
+
+// ============================================================================
+// 2. PROBLEM OWNERS & NONCOMMERCIAL ELIGIBILITY (FR-130)
+// ============================================================================
+
+model Organization {
+  id                  String             @id @default(cuid())
+  legalName           String
+  websiteUrl          String?
+  category            OwnerCategory
+  einOrRegistration   String?
+  noncommercialAttest Boolean            @default(false)
+  eligibilityStatus   VerificationStatus @default(PENDING)
+  reviewNotes         String?
+  verifiedById        String?
+  verifiedAt          DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  members     OrganizationMember[]
+  submissions ProblemSubmission[]
+}
+
+model OrganizationMember {
+  id             String @id @default(cuid())
+  organizationId String
+  userId         String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+// ============================================================================
+// 3. DUAL-MODE DISCOVERY, LIVING PROFILE & PROVENANCE (FR-096..117, FR-146)
+// ============================================================================
+
+model ProblemSubmission {
+  id                   String          @id @default(cuid())
+  ownerId              String
+  organizationId       String?
+  title                String
+  state                SubmissionState @default(DRAFT)
+  privacyNoticeAckAt   DateTime?       // Must be set before recording discovery (FR-111)
+  aiEscalationReason   String?         // Set on context overflow or safety flag (Section 7.4)
+  version              Int             @default(1)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  owner          User                    @relation(fields: [ownerId], references: [id])
+  organization   Organization?           @relation(fields: [organizationId], references: [id])
+  draftState     DiscoveryDraftState?
+  sourceRecords  DiscoverySourceRecord[]
+  profileRevs    ProjectProfile[]
+  projects       Project[]
+}
+
+// Preserves mode preference and wizard step across devices without duplicating submissions (FR-146)
+model DiscoveryDraftState {
+  submissionId    String     @id
+  preferredMode   IntakeMode @default(CHAT)
+  currentWizardStep Int      @default(1)
+  pendingDraftJson Json?
+  lastSavedAt     DateTime   @default(now())
+
+  submission ProblemSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+}
+
+// Unified chronological store for both Chat turns and verbatim Wizard answers (FR-098)
+model DiscoverySourceRecord {
+  id              String              @id @default(cuid())
+  submissionId    String
+  sequenceNumber  Int
+  inputMode       IntakeMode
+  authorRole      DiscoveryAuthorRole
+  authorUserId    String?
+  questionKey     String?             // Wizard field identifier or AI prompt ID
+  questionVersion String?
+  questionText    String?             // Exact question shown to stakeholder
+  content         String              // Verbatim stakeholder wording; never silently overwritten
+  isRedacted      Boolean             @default(false)
+  redactionReason String?
+  supersededById  String?             @unique
+  createdAt       DateTime            @default(now())
+
+  submission      ProblemSubmission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  supersededBy    DiscoverySourceRecord? @relation("RecordSupersession", fields: [supersededById], references: [id])
+  supersedes      DiscoverySourceRecord? @relation("RecordSupersession")
+  requirementLinks RequirementSource[]
+
+  @@unique([submissionId, sequenceNumber])
+}
+
+// Versioned Living Project Profile (LPP) (FR-100, Section 7.2)
+model ProjectProfile {
+  id             String   @id @default(cuid())
+  submissionId   String
+  revisionNumber Int
+  structuredData Json     // Categorized claims tagged with ClaimStatus + sourceIds
+  modelId        String?
+  promptVersion  String?
+  createdAt      DateTime @default(now())
+
+  submission ProblemSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, revisionNumber])
+}
+
+// ============================================================================
+// 4. MICRO-PROJECTS, SPECIFICATIONS & BLIND DISCOVERY (FR-028, FR-060, FR-118)
+// ============================================================================
+
+model Project {
+  id                  String         @id @default(cuid())
+  opaqueSlug          String         @unique // Neutral public ID (e.g., "CS-024"), never contains owner name
+  submissionId        String
+  state               ProjectState   @default(DRAFT)
+  complexity          ComplexityTier @default(FOUNDATIONAL)
+  category            String
+  requiredSkills      String[]
+  estimatedHoursMin   Int?
+  estimatedHoursMax   Int?
+  hasDefectWindow     Boolean        @default(false) // BR-039 optional pre-agreed 14-day window
+  defectWindowDays    Int            @default(14)
+  licenseSpdx         String         @default("MIT")
+  maintenanceOwner    String?
+  publishedAt         DateTime?
+  completedAt         DateTime?
+  version             Int            @default(1)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  submission       ProblemSubmission        @relation(fields: [submissionId], references: [id])
+  specifications   Specification[]
+  anonymousProfile AnonymousProjectProfile?
+  routingPolicy    RoutingPolicy?
+  readinessCheck   ReadinessChecklist?
+  assignments      ProjectAssignment[]
+  repository       RepositoryReference?
+  reviews          Review[]
+  acceptances      AcceptanceRecord[]
+  contributions    ContributionRecord[]
+  handoff          RepositoryHandoff?
+}
+
+// Separate sanitized projection served to unassigned builders and public catalog (FR-119)
+model AnonymousProjectProfile {
+  projectId           String    @id
+  publicTitle         String
+  sanitizedProblem    String
+  sanitizedObjective  String
+  sanitizedScope      String
+  sanitizedCriteria   String
+  communityImpact     String
+  dependenciesSummary String?
+  anonymizedById      String?
+  anonymizedAt        DateTime?
+  updatedAt           DateTime  @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Specification {
+  id                   String    @id @default(cuid())
+  projectId            String
+  versionNumber        Int
+  isActiveApproved     Boolean   @default(false)
+  title                String
+  problemStatement     String
+  objective            String
+  targetUsers          String
+  scopeInclusions      String[]
+  scopeExclusions      String[]
+  technicalConstraints String[]
+  deliverables         String[]
+  acceptanceCriteria   String[]
+  testingRequirements  String
+  securityNotes        String
+  documentationReqs    String
+  definitionOfDone     String
+  plainLanguageSummary String
+  ownerConfirmedAt     DateTime?
+  techApprovedById     String?
+  techApprovedAt       DateTime?
+  createdAt            DateTime  @default(now())
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requirements Requirement[]
+
+  @@unique([projectId, versionNumber])
+}
+
+model Requirement {
+  id              String      @id @default(cuid())
+  specificationId String
+  code            String      // e.g., "REQ-01"
+  statement       String
+  status          ClaimStatus @default(PROPOSED)
+  supersededById  String?
+
+  specification Specification       @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+  sources       RequirementSource[]
+}
+
+model RequirementSource {
+  requirementId  String
+  sourceRecordId String
+  verifiedByHuman Boolean @default(false) // Valid ID alone does not prove semantic support (FR-141)
+
+  requirement  Requirement           @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  sourceRecord DiscoverySourceRecord @relation(fields: [sourceRecordId], references: [id], onDelete: Cascade)
+
+  @@id([requirementId, sourceRecordId])
+}
+
+// FR-144 Definition-of-Ready gate before project publication
+model ReadinessChecklist {
+  projectId              String    @id
+  ownerEligibilityOk     Boolean   @default(false)
+  scopeAndCriteriaOk     Boolean   @default(false)
+  provenanceVerifiedOk   Boolean   @default(false)
+  anonymizationApproved  Boolean   @default(false)
+  reviewerCapacityBooked Boolean   @default(false)
+  termsAndLicenseSet     Boolean   @default(false)
+  repoControlsVerified   Boolean   @default(false)
+  signedOffById          String?
+  signedOffAt            DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// 5. SEQUENTIAL PRIORITY ROUTING & ASSIGNMENTS (FR-040..046)
+// ============================================================================
+
+model RoutingPolicy {
+  projectId           String   @id
+  missionWindowOpens  DateTime // Tier 1 start
+  partnerWindowOpens  DateTime // Tier 2 start
+  generalWindowOpens  DateTime // Tier 3 start
+  requiresApplication Boolean  @default(false) // False = direct atomic claim; True = review application
+  updatedById         String?
+  updatedAt           DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectAssignment {
+  id               String       @id @default(cuid())
+  projectId        String
+  developerId      String
+  matchedTier      RoutingTier  // Recorded internally for analytics; never shown publicly
+  status           String       @default("ACTIVE") // ACTIVE, WITHDRAWN, REASSIGNED, COMPLETED
+  identityUnlocked Boolean      @default(false)
+  unlockedAt       DateTime?
+  withdrawnAt      DateTime?
+  withdrawReason   String?
+  assignedAt       DateTime     @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  developer User    @relation(fields: [developerId], references: [id])
+
+  @@index([projectId, status])
+}
+
+// ============================================================================
+// 6. GITHUB INTEGRATION & GOVERNANCE ADAPTER (FR-048..059, FR-140, FR-145)
+// ============================================================================
+
+model RepositoryTemplate {
+  id                  String   @id @default(cuid())
+  slug                String   @unique // e.g., "nextjs-ts-starter", "python-fastapi-starter"
+  displayName         String
+  language            String
+  framework           String
+  githubTemplateRepo  String   // e.g., "civicspec-org/tpl-nextjs-ts"
+  templateVersion     String
+  hasGitleaksWorkflow Boolean  @default(true)
+  hasCiTestWorkflow   Boolean  @default(true)
+  hasDeployButton     Boolean  @default(false)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+}
+
+model RepositoryReference {
+  projectId             String         @id
+  templateId            String
+  governanceMode        GovernanceMode @default(FREE_FORK_CI)
+  githubRepoId          String         @unique
+  githubOwner           String         // "civicspec-org"
+  githubRepoName        String         // Neutral identifier (e.g., "cs-024-workspace")
+  isPrivate             Boolean        @default(true)
+  gitleaksVerified      Boolean        @default(false)
+  ciWorkflowVerified    Boolean        @default(false)
+  branchRulesVerified   Boolean        @default(false) // True via Read-only fork in FREE_FORK_CI
+  runbookVerified       Boolean        @default(false)
+  provisionedAt         DateTime       @default(now())
+
+  project      Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  accessGrants RepositoryAccessGrant[]
+  issues       GitHubIssueReference[]
+  pullRequests PullRequestReference[]
+}
+
+model RepositoryAccessGrant {
+  id             String           @id @default(cuid())
+  projectId      String
+  userId         String
+  githubUsername String
+  permission     String           // "pull" (Read) for builders in FREE_FORK_CI; "push" for reviewers
+  status         RepoAccessStatus @default(PENDING_GRANT)
+  lastError      String?
+  grantedAt      DateTime?
+  revokedAt      DateTime?
+
+  repository RepositoryReference @relation(fields: [projectId], references: [projectId], onDelete: Cascade)
+
+  @@index([projectId, userId, status])
+}
+
+model GitHubIssueReference {
+  id            String   @id @default(cuid())
+  projectId     String
+  githubIssueId String   @unique
+  issueNumber   Int
+  specVersion   Int
+  createdAt     DateTime @default(now())
+
+  repository RepositoryReference @relation(fields: [projectId], references: [projectId], onDelete: Cascade)
+}
+
+model PullRequestReference {
+  id             String   @id @default(cuid())
+  projectId      String
+  githubPrId     String   @unique
+  prNumber       Int
+  authorUsername String
+  headSha        String
+  state          String   // OPEN, CLOSED, MERGED
+  ciChecksPassed Boolean  @default(false)
+  gitleaksPassed Boolean  @default(false)
+  mergedAt       DateTime?
+  updatedAt      DateTime @updatedAt
+
+  repository RepositoryReference @relation(fields: [projectId], references: [projectId], onDelete: Cascade)
+}
+
+// ============================================================================
+// 7. SHA-BOUND REVIEW, ACCEPTANCE, VERIFICATION & HANDOFF (FR-066..080, FR-142)
+// ============================================================================
+
+model Review {
+  id            String   @id @default(cuid())
+  projectId     String
+  reviewerId    String
+  specVersion   Int
+  deliveredSha  String   // Exact commit SHA reviewed (FR-142)
+  decision      String   // APPROVED, CHANGES_REQUESTED
+  rationale     String
+  isInvalidated Boolean  @default(false) // Flipped true if new commit pushed after approval
+  createdAt     DateTime @default(now())
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reviewer User    @relation(fields: [reviewerId], references: [id])
+}
+
+model AcceptanceRecord {
+  id           String   @id @default(cuid())
+  projectId    String
+  acceptedById String
+  specVersion  Int
+  deliveredSha String
+  notes        String?
+  acceptedAt   DateTime @default(now())
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  acceptedBy User    @relation(fields: [acceptedById], references: [id])
+}
+
+model ContributionRecord {
+  id               String    @id @default(cuid())
+  projectId        String
+  developerId      String
+  specVersion      Int
+  acceptedSha      String
+  prNumber         Int
+  neutralTitle     String
+  neutralSummary   String
+  verifiedSkills   String[]
+  completedAt      DateTime
+  isRevoked        Boolean   @default(false)
+  revocationReason String?
+  createdAt        DateTime  @default(now())
+
+  project    Project             @relation(fields: [projectId], references: [id])
+  developer  User                @relation(fields: [developerId], references: [id])
+  milestones MilestoneEvidence[]
+  shareLink  VerificationShare?
+}
+
+// Distinguishes reviewed code, stakeholder acceptance, deployment, and adoption (FR-143)
+model MilestoneEvidence {
+  id             String        @id @default(cuid())
+  contributionId String
+  milestone      MilestoneType
+  evidenceNote   String?
+  verifiedById   String?
+  verifiedAt     DateTime      @default(now())
+
+  contribution ContributionRecord @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+}
+
+// Consent-controlled, unlisted, revocable external verification link (FR-078, UX-32/33)
+model VerificationShare {
+  id              String    @id @default(cuid())
+  contributionId  String    @unique
+  opaqueToken     String    @unique // High-entropy URL token for /verify/[opaqueToken]
+  publicName      String    // Developer-approved display name
+  showSkills      Boolean   @default(true)
+  showMilestones  Boolean   @default(true)
+  isActive        Boolean   @default(true)
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  contribution ContributionRecord @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+}
+
+model RepositoryHandoff {
+  projectId          String    @id
+  handoffMethod      String    // "RETAIN_CIVICSPEC", "FORK_TO_OWNER", "MANUAL_TRANSFER"
+  maintenanceOwner   String
+  runbookDelivered   Boolean   @default(false)
+  defectWindowEndsAt DateTime? // Null if responsibility ended at COMPLETED (BR-039)
+  publicReleaseOk    Boolean   @default(false)
+  completedAt        DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// 8. OPTIONAL SUPPORTER LINKS, WEBHOOK IDEMPOTENCY & AUDIT LOG
+// ============================================================================
+
+model SupporterLink {
+  id          String   @id @default(cuid())
+  userId      String
+  label       String
+  externalUrl String   // Validated HTTPS URL; zero internal payment processing (FR-081..087)
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProcessedWebhookEvent {
+  deliveryId  String   @id // GitHub X-GitHub-Delivery header for strict idempotency (NFR-006)
+  eventType   String
+  processedAt DateTime @default(now())
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String   // e.g., "IDENTITY_DISCLOSED", "PRIORITY_GRANTED", "REPO_ACCESS_REVOKED"
+  entityType String
+  entityId   String
+  rationale  String?
+  metadata   Json?    // Never stores secrets, raw credentials, or confidential records
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

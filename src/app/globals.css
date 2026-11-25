@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-text-primary);
+  --font-body: var(--font-sans);
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+button, input { font: inherit; }
+
+.site-shell {
+  width: min(100%, 72rem);
+  margin-inline: auto;
+  padding: var(--space-6);
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding-block: var(--space-4) var(--space-8);
+  border-bottom: 1px solid var(--color-border-decorative);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-accent-text);
+  font-size: var(--text-h2-size);
+  font-weight: 700;
+}
+
+.theme-toggle { min-width: 0; margin: 0; padding: 0; border: 0; }
+.theme-toggle legend {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta-size);
+}
+.theme-options { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.theme-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-min-height);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.theme-choice:hover { background: var(--color-surface-subtle); }
+.theme-choice:has(input:checked) {
+  background: var(--color-action-bg);
+  color: var(--color-action-text);
+}
+.theme-choice:has(input:checked):hover { background: var(--color-action-bg-hover); }
+.theme-choice:has(input:focus-visible) {
+  outline: var(--focus-outline-width) solid var(--color-focus-ring);
+  outline-offset: var(--focus-outline-offset);
+}
+.theme-choice input { margin: 0; accent-color: var(--color-action-bg); }
+.theme-choice input:focus-visible { outline: none; }
+.theme-choice svg, .status-badge svg { flex-shrink: 0; }
+
+main { padding-block: var(--space-12); }
+.intro-panel {
+  padding: clamp(var(--space-6), 5vw, var(--space-16));
+  border: 1px solid var(--color-border-decorative);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+.eyebrow {
+  margin: 0 0 var(--space-4);
+  color: var(--color-accent-text);
+  font-weight: 600;
+}
+h1 {
+  max-width: 24ch;
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-h1-size);
+  line-height: var(--text-h1-line);
+  font-weight: 700;
+  text-wrap: balance;
+}
+.intro-copy { max-width: var(--measure-max); margin: 0 0 var(--space-8); }
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-control);
+  background: var(--color-success-surface);
+  color: var(--color-success-text);
+  font-size: var(--text-meta-size);
+}
+.placeholder-note {
+  max-width: var(--measure-max);
+  margin: var(--space-6) 0 0;
+  color: var(--color-text-secondary);
+}
+.site-footer { color: var(--color-text-secondary); font-size: var(--text-meta-size); }
+.site-footer p { margin: 0; }
+.skip-link {
+  position: fixed;
+  inset-block-start: var(--space-3);
+  inset-inline-start: var(--space-3);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  min-height: var(--control-min-height);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--color-action-bg);
+  color: var(--color-action-text);
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+@media (max-width: 30rem) {
+  .site-shell { padding: var(--space-4); }
+  .theme-choice { padding-inline: var(--space-2); }
+  main { padding-block: var(--space-8); }
+}
+
+@media (forced-colors: active) {
+  .theme-choice:has(input:checked) { border-width: var(--focus-outline-width); }
+}
