@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Next.js & Build Outputs
+.next/
+out/
+build/
+dist/
+
+# Environment & Secrets (PRD NFR-003)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+
+# Database & Prisma
+prisma/*.db
+prisma/*.db-journal
+*.sqlite
+*.sqlite3
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+.vitest/
+
+# Logs & Debug
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Runtime & OS Files
+.DS_Store
+Thumbs.db
+*.pid
+*.seed
+*.pid.lock
+
+# IDEs & Local Agent Scratchpads
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.antigravity/
+.claude/
+.cursor/
+.codex/
+.bmad-cache/
+
+# Vercel & Deployment
+.vercel/
+.turbo/
+
+# TypeScript Cache
+*.tsbuildinfo
+next-env.d.ts

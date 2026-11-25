@@ -1,0 +1,194 @@
+/* ============================================================================
+ * CivicSpec Design Tokens — Semantic Light / Dark / System Theme Contract
+ * Baseline: CivicSpec-UX-UI-Spec-v1.0.1 (§3 & §3.1) & CivicSpec PRD v1.0.7 (NFR-051)
+ * Target: WCAG 2.2 AA contrast, reflow, and keyboard focus visibility
+ * ============================================================================ */
+
+:root {
+  /* Brand & Identity */
+  --color-brand-dark: #183C37;
+  --color-brand-dark-text: #FFFFFF;
+
+  /* Surfaces & Canvas (Light Default) */
+  --color-canvas: #F5F7F8;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-subtle: #EDF2F3;
+
+  /* Typography */
+  --color-text-primary: #172B35;
+  --color-text-secondary: #465A64;
+  --color-text-inverse: #FFFFFF;
+
+  /* Primary Interactive Actions */
+  --color-action-bg: #116B5B;
+  --color-action-bg-hover: #0D5548;
+  --color-action-text: #FFFFFF;
+
+  /* Accent Surfaces */
+  --color-accent-surface: #DDF3E9;
+  --color-accent-text: #183C37;
+
+  /* Borders & Essential Control Boundaries (>= 3:1 contrast) */
+  --color-border-decorative: #D5DCDE;
+  --color-border-control: #637780;
+
+  /* Keyboard Focus Ring (WCAG 2.2 AA Focus Not Obscured & Appearance) */
+  --color-focus-ring: #235AC4;
+  --focus-outline-width: 3px;
+  --focus-outline-offset: 2px;
+
+  /* Semantic Status Tokens (Always paired with icon + text, never color alone) */
+  --color-error-surface: #FFF1F0;
+  --color-error-text: #9F2424;
+  --color-error-border: #9F2424;
+
+  --color-warning-surface: #FFF4DC;
+  --color-warning-text: #7A4B00;
+  --color-warning-border: #7A4B00;
+
+  --color-success-surface: #E5F5EC;
+  --color-success-text: #176044;
+  --color-success-border: #176044;
+
+  /* Typography Scale & Measure */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+
+  --text-body-size: 1rem;         /* 16px */
+  --text-body-line: 1.5;
+  --text-meta-size: 0.875rem;     /* 14px */
+  --text-meta-line: 1.5;
+  --text-h1-size: 2rem;           /* 32px */
+  --text-h1-line: 1.25;           /* 40px */
+  --text-h2-size: 1.5rem;         /* 24px */
+  --text-h2-line: 1.333;          /* 32px */
+  --text-h3-size: 1.25rem;        /* 20px */
+  --text-h3-line: 1.4;            /* 28px */
+  --measure-max: 76ch;
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+
+  /* Radii & Control Targets */
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --control-min-height: 44px;
+
+  color-scheme: light;
+}
+
+/* ============================================================================
+ * Dark Theme Overrides (Explicit [data-theme="dark"] or OS System Preference)
+ * ============================================================================ */
+
+[data-theme="dark"] {
+  --color-canvas: #101C20;
+  --color-surface: #17282D;
+  --color-surface-elevated: #1E333A;
+  --color-surface-subtle: #142227;
+
+  --color-text-primary: #E9F3F0;
+  --color-text-secondary: #B5C9C9;
+  --color-text-inverse: #101C20;
+
+  --color-action-bg: #8FD6B5;
+  --color-action-bg-hover: #A6E2C6;
+  --color-action-text: #102D27;
+
+  --color-accent-surface: #25483F;
+  --color-accent-text: #DDF3E9;
+
+  --color-border-decorative: #2C434A;
+  --color-border-control: #839C9F;
+
+  --color-focus-ring: #A8C7FF;
+
+  --color-error-surface: #45272B;
+  --color-error-text: #FFC0C0;
+  --color-error-border: #FFC0C0;
+
+  --color-warning-surface: #40351F;
+  --color-warning-text: #FFE0A0;
+  --color-warning-border: #FFE0A0;
+
+  --color-success-surface: #203D32;
+  --color-success-text: #A9E8C8;
+  --color-success-border: #A9E8C8;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: #101C20;
+    --color-surface: #17282D;
+    --color-surface-elevated: #1E333A;
+    --color-surface-subtle: #142227;
+
+    --color-text-primary: #E9F3F0;
+    --color-text-secondary: #B5C9C9;
+    --color-text-inverse: #101C20;
+
+    --color-action-bg: #8FD6B5;
+    --color-action-bg-hover: #A6E2C6;
+    --color-action-text: #102D27;
+
+    --color-accent-surface: #25483F;
+    --color-accent-text: #DDF3E9;
+
+    --color-border-decorative: #2C434A;
+    --color-border-control: #839C9F;
+
+    --color-focus-ring: #A8C7FF;
+
+    --color-error-surface: #45272B;
+    --color-error-text: #FFC0C0;
+    --color-error-border: #FFC0C0;
+
+    --color-warning-surface: #40351F;
+    --color-warning-text: #FFE0A0;
+    --color-warning-border: #FFE0A0;
+
+    --color-success-surface: #203D32;
+    --color-success-text: #A9E8C8;
+    --color-success-border: #A9E8C8;
+
+    color-scheme: dark;
+  }
+}
+
+/* ============================================================================
+ * Base Accessibility & Global Focus Defaults (UX §3 & §15)
+ * ============================================================================ */
+
+html {
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+}
+
+:focus-visible {
+  outline: var(--focus-outline-width) solid var(--color-focus-ring);
+  outline-offset: var(--focus-outline-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
