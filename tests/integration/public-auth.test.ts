@@ -45,6 +45,10 @@ test("public auth and onboarding database security", async (context) => {
       assert.notEqual(await auth.authenticatePassword(emails[0], password), null);
     });
 
+    await context.test("direct sign-in without a destination sends roleless accounts to onboarding", async () => {
+      assert.deepEqual(await flows.signIn({ email: emails[0], password }), { ok: true, redirectTo: "/app/onboarding?returnTo=%2Fapp" });
+    });
+
     await context.test("each invalid password policy case creates no database account or session", async () => {
       const before = await prisma.session.count();
       for (const password of ["Aa1!bcd", "aa1!bcde", "AA1!BCDE", "Aa!!bcde", "Aa12bcde", "Aa1 bcde", "Aa1!" + "x".repeat(125)]) {
@@ -111,6 +115,7 @@ test("public auth and onboarding database security", async (context) => {
       await flows.onboard(onboarding);
       assert.equal(await prisma.userRole.count({ where: { userId: user.id } }), 1);
       assert.equal(await prisma.auditEvent.count({ where: { entityId: user.id } }), 1);
+      assert.deepEqual(await flows.signIn({ email: emails[0], password }), { ok: true, redirectTo: "/app" });
       assert.deepEqual(await flows.signIn({ email: emails[0], password, returnTo: "//evil.invalid" }), { ok: true, redirectTo: "/app" });
       assert.deepEqual(await flows.signIn({ email: emails[0], password, returnTo: "/app?from=safe#next" }), { ok: true, redirectTo: "/app?from=safe#next" });
     });

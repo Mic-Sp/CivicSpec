@@ -7,7 +7,7 @@ import { getCurrentUser } from "@/server/auth";
 export default async function Home() {
   const user = await getCurrentUser();
   return (
-    <SiteFrame signedIn={Boolean(user)} workspaceHref={user ? "/app" : undefined}>
+    <SiteFrame signedInDisplayName={user?.displayName} workspaceHref={user ? "/app" : undefined}>
         <section className="intro-panel" aria-labelledby="welcome-heading">
           <p className="eyebrow">Community needs. Shared possibility.</p>
           <h1 id="welcome-heading">Real needs. Real code. Real experience.</h1>

@@ -11,7 +11,9 @@ export const metadata: Metadata = { title: "Sign in or create an account | Civic
 
 export default async function AuthPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
-  const returnTo = authDestination(params.returnTo);
+  // Both entry conventions use the same validator and /app fallback. Keep the
+  // internal form field canonical so actions validate the destination again.
+  const returnTo = authDestination(params.next ?? params.returnTo);
   const user = await getCurrentUser();
   if (user) redirect(user.roles.length ? returnTo : onboardingLocation(returnTo));
   const mode = params.mode === "register" ? "register" : "sign-in";

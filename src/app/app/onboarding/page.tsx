@@ -13,7 +13,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const user = await requireAuthentication({ kind: "page", returnTo: onboardingLocation(returnTo) });
   if (user.roles.length) redirect("/app");
   return (
-    <SiteFrame signedIn>
+    <SiteFrame signedInDisplayName={user.displayName}>
       <section className="auth-panel onboarding-panel" aria-labelledby="onboarding-heading">
         <p className="eyebrow">Your place in the community</p>
         <h1 id="onboarding-heading">How will you take part?</h1>

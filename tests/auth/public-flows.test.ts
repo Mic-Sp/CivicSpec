@@ -126,11 +126,14 @@ test("all failed credential lookups return the same generic login failure", asyn
 test("sign-in honors safe paths; roleless accounts always go through onboarding", async () => {
   const f = fixture();
   f.login({ id: f.user.id, email: f.user.email, displayName: f.user.displayName, roles: [RoleType.REVIEWER] });
+  assert.deepEqual(await f.flows.signIn({ email: f.user.email, password: "valid" }), { ok: true, redirectTo: "/app" });
+  assert.deepEqual(await f.flows.signIn({ email: f.user.email, password: "valid", returnTo: "/" }), { ok: true, redirectTo: "/" });
   assert.deepEqual(await f.flows.signIn({ email: f.user.email, password: "valid", returnTo: "/app?tab=work#next" }), { ok: true, redirectTo: "/app?tab=work#next" });
   for (const returnTo of ["https://evil.invalid", "//evil.invalid", "/%2fevil.invalid", "/auth", "/auth?returnTo=/auth", "/app/onboarding"]) {
     assert.deepEqual(await f.flows.signIn({ email: f.user.email, password: "valid", returnTo }), { ok: true, redirectTo: "/app" });
   }
   f.login({ id: f.user.id, email: f.user.email, displayName: f.user.displayName, roles: [] });
+  assert.deepEqual(await f.flows.signIn({ email: f.user.email, password: "valid" }), { ok: true, redirectTo: "/app/onboarding?returnTo=%2Fapp" });
   assert.deepEqual(await f.flows.signIn({ email: f.user.email, password: "valid", returnTo: "/app?x=1" }), { ok: true, redirectTo: "/app/onboarding?returnTo=%2Fapp%3Fx%3D1" });
   assert.equal(authDestination(undefined), "/app");
 });

@@ -8,6 +8,7 @@ import type { RoleType } from "@prisma/client";
 
 import { signOutAction } from "@/app/auth/actions";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SignedInIndicator } from "@/components/SignedInIndicator";
 import { roleNames, workspaceContent, workspaceRoles } from "@/lib/workspace";
 import type { AuthUser } from "@/server/auth/user";
 
@@ -70,7 +71,10 @@ export function WorkspaceShell({ user, initialRole, children }: { user: AuthUser
       <div className="workspace-shell">
         <a className="skip-link" href="#main-content">Skip to content</a>
         <header className="workspace-header">
-          <Link className="wordmark" href="/" aria-label="CivicSpec home"><CodeXml size={28} aria-hidden="true" /><span>CivicSpec</span></Link>
+          <div className="header-identity">
+            <Link className="wordmark" href="/" aria-label="CivicSpec home"><CodeXml size={28} aria-hidden="true" /><span>CivicSpec</span></Link>
+            <SignedInIndicator displayName={user.displayName} />
+          </div>
           <div className="workspace-role-control">
             <label htmlFor="workspace-role">Workspace role</label>
             <select id="workspace-role" value={selection} disabled={user.roles.length < 2} onChange={event => selectRole(event.target.value as RoleType)} aria-describedby="role-help role-status">

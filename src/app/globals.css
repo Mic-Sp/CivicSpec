@@ -45,6 +45,11 @@ button, input { font: inherit; }
 }
 
 .header-actions, .landing-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6); }
+.header-identity { flex: 1 1 12rem; min-width: 0; max-width: 100%; }
+.signed-in-indicator { display: flex; align-items: flex-start; gap: var(--space-2); max-width: 32ch; margin: var(--space-2) 0 0; color: var(--color-text-secondary); font-size: var(--text-meta-size); overflow-wrap: anywhere; }
+.signed-in-indicator svg { flex-shrink: 0; margin-top: var(--space-1); }
+.signed-in-indicator span { min-width: 0; }
+.signed-in-indicator strong { color: var(--color-text-primary); font-weight: 600; }
 .landing-actions { margin-top: var(--space-8); gap: var(--space-3); }
 .primary-button, .secondary-button, .text-button {
   display: inline-flex; align-items: center; justify-content: center;
@@ -236,6 +241,7 @@ h1 {
 .workspace-footer { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-12); color: var(--color-text-secondary); font-size: var(--text-meta-size); overflow-wrap: anywhere; }
 .workspace-footer svg { flex-shrink: 0; }
 .workspace-shell h1 { max-width: 100%; overflow-wrap: anywhere; }
+.dashboard > .eyebrow { overflow-wrap: anywhere; }
 .workspace-shell h2 { font-size: var(--text-h2-size); line-height: var(--text-h2-line); font-weight: 600; }
 .workspace-shell h3 { font-size: var(--text-h3-size); line-height: var(--text-h3-line); font-weight: 600; }
 .workspace-introduction { max-width: var(--measure-max); margin: 0 0 var(--space-4); color: var(--color-text-secondary); }
@@ -267,7 +273,7 @@ h1 {
 @media (max-width: 47.99rem) {
   .workspace-shell { padding: var(--space-4); }
   .workspace-header { gap: var(--space-4); }
-  .workspace-header .wordmark { flex-basis: 100%; }
+  .workspace-header .header-identity { flex-basis: 100%; }
   .workspace-role-control { width: 100%; max-width: none; }
   .workspace-panel { padding: var(--space-4); }
   .account-details > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }

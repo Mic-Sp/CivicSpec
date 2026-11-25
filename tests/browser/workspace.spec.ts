@@ -6,6 +6,7 @@ import { PrismaClient, type UserPreference } from "@prisma/client";
 const prisma = new PrismaClient();
 const run = `workspace_browser_${randomUUID()}`;
 const emails = [`${run}@civicspec.local`];
+const participantName = `Synthetic ${"Participant".repeat(7)}`.slice(0, 80);
 const seedLocals = ["admin", "owner", "reviewer", "builder-open", "builder-priority", "builder-partner"];
 const snapshots = new Map<string, UserPreference | null>();
 const seedIds = new Map<string, string>();
@@ -34,6 +35,7 @@ test.afterAll(async () => {
     ["sign-in-global", "global"], ["registration-global", "global"],
     ...seedLocals.map(local => ["sign-in-account", `${local}@civicspec.local`]),
     ...emails.map(email => ["registration-account", email]),
+    ...emails.map(email => ["sign-in-account", email]),
     ...[...userIds].flatMap(id => [["preferences-account", id], ["onboarding-account", id]]),
   ];
   const keys = pairs.map(([scope, identity]) => createHmac("sha256", secret).update(`auth-limit:${scope}:${identity}`).digest("hex"));
@@ -63,10 +65,17 @@ test("workspace/account routes require authentication and roleless accounts go t
   await page.goto("/app/account");
   await expect(page).toHaveURL(/\/auth\?returnTo=/);
   await page.goto("/auth?mode=register");
-  await page.getByLabel("Name to use on CivicSpec").fill("Synthetic Workspace Participant");
+  await page.getByLabel("Name to use on CivicSpec").fill(participantName);
   await page.getByLabel("Email", { exact: true }).fill(emails[0]);
   await page.getByLabel("Password", { exact: true }).fill("Aa1!bcde");
   await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/onboarding/);
+  await expect(page.getByRole("banner").locator(".signed-in-indicator")).toHaveText(`Signed in as ${participantName}`);
+  await page.getByRole("banner").getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.goto("/auth");
+  await page.getByLabel("Email", { exact: true }).fill(emails[0]);
+  await page.getByLabel("Password", { exact: true }).fill("Aa1!bcde");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/onboarding/);
   await page.goto("/app/account");
   await expect(page).toHaveURL(/\/app\/onboarding/);
@@ -196,6 +205,7 @@ test("workspace/account reflow, keyboard navigation, and Light/Dark accessibilit
 test("public entry recognizes authentication and opens the workspace directly", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Create an account", exact: true })).toBeVisible();
+  await expect(page.getByRole("banner").locator(".signed-in-indicator")).toHaveCount(0);
   await signIn(page, "admin");
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Open workspace", exact: true })).toBeVisible();
@@ -203,4 +213,35 @@ test("public entry recognizes authentication and opens the workspace directly", 
   await page.getByRole("link", { name: "Open workspace", exact: true }).click();
   await expect(page).toHaveURL(/\/app$/);
   await signOut(page);
+});
+
+test("public and workspace headers show only the display name and reflow with long names", async ({ page }) => {
+  await page.goto("/auth");
+  await page.getByLabel("Email", { exact: true }).fill(emails[0]);
+  await page.getByLabel("Password", { exact: true }).fill("Aa1!bcde");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/app$/);
+  await page.setViewportSize({ width: 320, height: 1000 });
+  for (const path of ["/", "/app"]) {
+    await page.goto(path);
+    const header = page.getByRole("banner");
+    await expect(header.locator(".signed-in-indicator")).toHaveText(`Signed in as ${participantName}`);
+    await expect(header).not.toContainText(emails[0]);
+    for (const theme of ["Light", "Dark"]) {
+      await header.getByRole("radio", { name: theme, exact: true }).check();
+      await expect(page.getByText("Appearance saved.", { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      for (const control of await header.locator("a, button, select, .theme-choice").all()) {
+        if (!await control.isVisible()) continue;
+        const box = (await control.boundingBox())!;
+        expect(box.height).toBeGreaterThanOrEqual(44);
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(320);
+      }
+      expect((await new AxeBuilder({ page }).include("header").withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze()).violations).toEqual([]);
+    }
+  }
+  await page.screenshot({ path: "test-results/auth/header-mobile-dark.png", fullPage: true });
+  await signOut(page);
+  await expect(page.getByRole("banner").locator(".signed-in-indicator")).toHaveCount(0);
 });

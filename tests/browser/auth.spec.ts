@@ -27,9 +27,9 @@ test.afterAll(async () => {
   await prisma.$disconnect();
 });
 
-async function signIn(page: Page, email: string, returnTo = "/app") {
+async function signIn(page: Page, email: string, returnTo?: string, parameter = "returnTo") {
   throttleIdentities.push(["sign-in-account", email]);
-  await page.goto(`/auth?returnTo=${encodeURIComponent(returnTo)}`);
+  await page.goto(returnTo === undefined ? "/auth" : `/auth?${parameter}=${encodeURIComponent(returnTo)}`);
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(seededPassword);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -89,6 +89,21 @@ test("an external return path falls back to the internal app", async ({ page }) 
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByText("Your access: Builder.")).toBeVisible();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
+});
+
+test("direct sign-in defaults to /app while validated next and returnTo paths are honored", async ({ page }) => {
+  for (const [path, parameter, expected] of [
+    [undefined, "next", "/app"],
+    ["/app/account?from=next", "next", "/app/account?from=next"],
+    ["//evil.invalid", "next", "/app"],
+    ["/", "next", "/"],
+    ["/app/account?from=legacy", "returnTo", "/app/account?from=legacy"],
+  ] as const) {
+    await signIn(page, "admin@civicspec.local", path, parameter);
+    await expect(page).toHaveURL(expected);
+    await page.getByRole("banner").getByRole("button", { name: "Sign out", exact: true }).click();
+    await expect(page).toHaveURL("/");
+  }
 });
 
 test("registration requires terms, rejects a tampered ADMIN grant, and completes builder onboarding", async ({ page }) => {
