@@ -171,6 +171,15 @@ model Session {
   @@index([expiresAt])
 }
 
+// Shared fixed-window auth throttles. Keys are HMAC digests, never raw emails/IPs.
+model AuthRateLimit {
+  key       String   @id
+  hits      Int
+  resetsAt  DateTime
+
+  @@index([resetsAt])
+}
+
 model UserRole {
   id        String   @id @default(cuid())
   userId    String
