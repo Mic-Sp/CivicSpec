@@ -11,7 +11,7 @@ export function selectWorkspaceRole(authorized: readonly RoleType[], requested: 
 export const workspaceContent: Record<RoleType, { title: string; introduction: string; next: string; sections: readonly { name: string; description: string; href?: string }[] }> = {
   PROBLEM_OWNER: {
     title: "Problem owner dashboard", introduction: "A place to turn community needs into bounded, human-reviewed projects.",
-    next: "Check your noncommercial eligibility, then acknowledge the recording notice to save a private request. Interactive discovery is coming next.",
+    next: "Check your noncommercial eligibility, then start a private request in chat or the guided form.",
     sections: [{ name: "Owner eligibility", description: "Submit or review your noncommercial-purpose attestation.", href: "/app/owner/eligibility" }, { name: "My submissions", description: "Resume drafts and inspect requests and child micro-projects.", href: "/app/submissions" }, { name: "New request", description: "Review the privacy notice and choose a starting discovery mode.", href: "/app/submissions/new" }, { name: "My projects", description: "Follow reviewed projects and provide stakeholder feedback." }],
   },
   DEVELOPER: {

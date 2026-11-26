@@ -1,4 +1,4 @@
-# Owner intake entry (Step 4A)
+# Owner intake and discovery
 
 The owner service protects eligibility records, submission lists, and individual
 submission projections using the current authenticated PROBLEM_OWNER role.
@@ -55,9 +55,33 @@ linked to labels and an accessible, focused summary.
 The submissions list is paged in batches of 20. DTOs include parent state, saved
 time, mode, and child state/opaque identifier/public title only. Original sources,
 repository details, confidential builder eligibility, and referrals are excluded.
-Request status and interview placeholder pages use the same scoped lookup.
-The placeholder offers Save and exit and status inspection without collecting
-answers or pretending that an interview is available.
+The request status page uses the owner service. The interview uses its own
+scoped authorization, described below.
+
+## Interactive interview (Step 4B)
+
+Both modes use one versioned question catalog. Chat asks the first unanswered
+section based on saved chat and guided answers. "I don’t know yet" advances
+the interview while keeping that section unresolved for review. The guided
+form saves four answer sections plus a review step. The draft stores the current
+mode and wizard position. Mode changes with unsaved text require a decision.
+
+The interview saves chat questions and verbatim answers with server-owned
+question context in the same chronological source table. A correction appends
+an answer and links the previous record to it. A manual profile revision stores
+section status and source IDs. The interface derives its live view from the
+authorized, redaction-aware source projection.
+
+Writes use the submission version to reject stale edits. A transaction locks
+the user, submission, and eligibility record, and saves the latest command
+receipt with draft progress. Retrying that exact command returns its existing
+result. Older retries fail the version check without adding records.
+
+Owners edit their own acknowledged and eligible drafts. Administrators can read
+acknowledged history for intake oversight. Reviewer access requires a future
+submission-level authorization assignment. The reviewer role alone is
+insufficient. Completing both the answers and owner verification lets the
+owner submit for human review. Submitted requests are read-only in discovery.
 
 Tests run through the existing commands:
 

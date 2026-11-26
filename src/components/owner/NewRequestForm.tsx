@@ -20,7 +20,7 @@ export function NewRequestForm({ organizations, draftToken }: { organizations: {
     <section className="participation-terms" id="recording-notice" aria-labelledby="recording-heading">
       <h2 id="recording-heading">Before we record your request</h2><p>{recordingNotice}</p>
       <p>This covers your original chat messages, guided-form answers, and follow-up questions. Saved answers stay with this request so you can resume across sessions. Unassigned builders and public visitors cannot see the originals.</p>
-      <p>Choosing a mode creates a private draft only after you acknowledge below. The interactive interview is coming in the next update.</p>
+      <p>You can switch modes later and continue with the answers you’ve saved.</p>
     </section>
     <label className="terms-choice" htmlFor="privacyAck"><input type="checkbox" id="privacyAck" name="privacyAck" required checked={privacy} onChange={event => setPrivacy(event.target.checked)} aria-invalid={Boolean(state.fieldErrors.privacyAck)} aria-describedby={described("privacyAck", "recording-notice")} /><span>I understand how this request’s original answers will be recorded and shared.</span></label>
     <OwnerFieldError field="privacyAck" message={state.fieldErrors.privacyAck} />

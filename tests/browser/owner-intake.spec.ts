@@ -119,14 +119,14 @@ test("notice decline creates nothing; missing acknowledgments preserve fields; b
     await expect(page.getByLabel("Working title", { exact: true })).toHaveValue("Synthetic noncommercial request");
     await acknowledge(page); await page.getByRole("button", { name: "Create private draft", exact: true }).click();
     await expect(page).toHaveURL(/\/app\/submissions\/[^/]+\/interview$/);
-    await expect(page.getByRole("heading", { name: "Interactive discovery is coming next" })).toBeVisible();
-    await expect(page.locator("main")).toContainText(`Your saved starting mode: ${label}`);
+    await expect(page.getByRole("group", { name: "Discovery mode" }).getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
     const id = new URL(page.url()).pathname.split("/")[3];
     const saved = await prisma.problemSubmission.findUniqueOrThrow({ where: { id }, include: { draftState: true } });
     expect(saved.state).toBe("DRAFT"); expect(saved.privacyNoticeAckAt).not.toBeNull(); expect(saved.draftState?.preferredMode).toBe(mode);
     expect(await prisma.discoverySourceRecord.count({ where: { submissionId: id } })).toBe(0);
-    await page.reload(); await expect(page.getByRole("heading", { name: "Interactive discovery is coming next" })).toBeVisible();
-    await page.getByRole("link", { name: "Save and exit", exact: true }).click(); await expect(page).toHaveURL(/\/app\/submissions$/);
+    await page.reload();
+    await expect(page.getByRole("group", { name: "Discovery mode" }).getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Save and exit", exact: true }).click(); await expect(page).toHaveURL(/\/app\/submissions$/);
   }
   expect(await prisma.problemSubmission.count({ where: { ownerId: actors[0] } })).toBe(before + 2);
   await signOut(page);

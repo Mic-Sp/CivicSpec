@@ -12,6 +12,7 @@ const limits = {
   "onboarding-account": 10,
   "preferences-account": 120,
   "owner-intake-account": 30,
+  "discovery-account": 120,
 } as const;
 export type AuthLimitScope = keyof typeof limits;
 
